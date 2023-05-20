@@ -1194,9 +1194,8 @@ class RenderEditableTextLine extends RenderEditableBox {
 
   void _paintVirtualCursor(PaintingContext context, Offset effectiveOffset) {
     virtualCursors.forEach((virtualCursor) {
-      debugPrint('${virtualCursor.offset}, ${line.documentOffset}');
-      if (virtualCursor.offset - line.documentOffset >= line.length) {
-        debugPrint('no paint');
+      if (virtualCursor.offset - line.documentOffset > line.length ||
+          virtualCursor.offset < line.documentOffset) {
         return;
       }
       final position = TextPosition(
