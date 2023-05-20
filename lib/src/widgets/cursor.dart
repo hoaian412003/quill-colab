@@ -350,7 +350,7 @@ class CursorPainter {
 class VirtualCursor {
   factory VirtualCursor.fromJson(Map<String, dynamic> json) {
     return VirtualCursor(
-        color: json['color'] ? json['color'] : Colors.red,
+        color: json['color'] ? Color(int.parse(json['color'])) : Colors.red,
         offset: json['offset'] ? json['offset'] : 0);
   }
   VirtualCursor({required this.color, required this.offset});
