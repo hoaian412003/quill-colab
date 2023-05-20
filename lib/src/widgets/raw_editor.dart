@@ -46,45 +46,46 @@ import 'toolbar/link_style_button2.dart';
 import 'toolbar/search_dialog.dart';
 
 class RawEditor extends StatefulWidget {
-  const RawEditor({
-    required this.controller,
-    required this.focusNode,
-    required this.scrollController,
-    required this.scrollBottomInset,
-    required this.cursorStyle,
-    required this.selectionColor,
-    required this.selectionCtrls,
-    required this.embedBuilder,
-    Key? key,
-    this.scrollable = true,
-    this.padding = EdgeInsets.zero,
-    this.readOnly = false,
-    this.placeholder,
-    this.onLaunchUrl,
-    this.contextMenuBuilder = defaultContextMenuBuilder,
-    this.showSelectionHandles = false,
-    bool? showCursor,
-    this.textCapitalization = TextCapitalization.none,
-    this.maxHeight,
-    this.minHeight,
-    this.maxContentWidth,
-    this.customStyles,
-    this.customShortcuts,
-    this.customActions,
-    this.expands = false,
-    this.autoFocus = false,
-    this.enableUnfocusOnTapOutside = true,
-    this.keyboardAppearance = Brightness.light,
-    this.enableInteractiveSelection = true,
-    this.scrollPhysics,
-    this.linkActionPickerDelegate = defaultLinkActionPickerDelegate,
-    this.customStyleBuilder,
-    this.customRecognizerBuilder,
-    this.floatingCursorDisabled = false,
-    this.onImagePaste,
-    this.customLinkPrefixes = const <String>[],
-    this.dialogTheme,
-  })  : assert(maxHeight == null || maxHeight > 0, 'maxHeight cannot be null'),
+  const RawEditor(
+      {required this.controller,
+      required this.focusNode,
+      required this.scrollController,
+      required this.scrollBottomInset,
+      required this.cursorStyle,
+      required this.selectionColor,
+      required this.selectionCtrls,
+      required this.embedBuilder,
+      Key? key,
+      this.scrollable = true,
+      this.padding = EdgeInsets.zero,
+      this.readOnly = false,
+      this.placeholder,
+      this.onLaunchUrl,
+      this.contextMenuBuilder = defaultContextMenuBuilder,
+      this.showSelectionHandles = false,
+      bool? showCursor,
+      this.textCapitalization = TextCapitalization.none,
+      this.maxHeight,
+      this.minHeight,
+      this.maxContentWidth,
+      this.customStyles,
+      this.customShortcuts,
+      this.customActions,
+      this.expands = false,
+      this.autoFocus = false,
+      this.enableUnfocusOnTapOutside = true,
+      this.keyboardAppearance = Brightness.light,
+      this.enableInteractiveSelection = true,
+      this.scrollPhysics,
+      this.linkActionPickerDelegate = defaultLinkActionPickerDelegate,
+      this.customStyleBuilder,
+      this.customRecognizerBuilder,
+      this.floatingCursorDisabled = false,
+      this.onImagePaste,
+      this.customLinkPrefixes = const <String>[],
+      this.dialogTheme,
+      this.virtualCursors = const []})
+      : assert(maxHeight == null || maxHeight > 0, 'maxHeight cannot be null'),
         assert(minHeight == null || minHeight >= 0, 'minHeight cannot be null'),
         assert(maxHeight == null || minHeight == null || maxHeight >= minHeight,
             'maxHeight cannot be null'),
@@ -100,6 +101,7 @@ class RawEditor extends StatefulWidget {
   final bool scrollable;
   final double scrollBottomInset;
   final bool enableUnfocusOnTapOutside;
+  final List<VirtualCursor> virtualCursors;
 
   /// Additional space around the editor contents.
   final EdgeInsetsGeometry padding;
@@ -446,23 +448,23 @@ class RawEditorState extends EditorState
       link: _toolbarLayerLink,
       child: Semantics(
         child: _Editor(
-          key: _editorKey,
-          document: _doc,
-          selection: controller.selection,
-          hasFocus: _hasFocus,
-          scrollable: widget.scrollable,
-          cursorController: _cursorCont,
-          textDirection: _textDirection,
-          startHandleLayerLink: _startHandleLayerLink,
-          endHandleLayerLink: _endHandleLayerLink,
-          onSelectionChanged: _handleSelectionChanged,
-          onSelectionCompleted: _handleSelectionCompleted,
-          scrollBottomInset: widget.scrollBottomInset,
-          padding: widget.padding,
-          maxContentWidth: widget.maxContentWidth,
-          floatingCursorDisabled: widget.floatingCursorDisabled,
-          children: _buildChildren(_doc, context),
-        ),
+            key: _editorKey,
+            document: _doc,
+            selection: controller.selection,
+            hasFocus: _hasFocus,
+            scrollable: widget.scrollable,
+            cursorController: _cursorCont,
+            textDirection: _textDirection,
+            startHandleLayerLink: _startHandleLayerLink,
+            endHandleLayerLink: _endHandleLayerLink,
+            onSelectionChanged: _handleSelectionChanged,
+            onSelectionCompleted: _handleSelectionCompleted,
+            scrollBottomInset: widget.scrollBottomInset,
+            padding: widget.padding,
+            maxContentWidth: widget.maxContentWidth,
+            floatingCursorDisabled: widget.floatingCursorDisabled,
+            children: _buildChildren(_doc, context),
+            virtualCursors: widget.virtualCursors),
       ),
     );
 
@@ -939,18 +941,20 @@ class RawEditorState extends EditorState
       customLinkPrefixes: widget.customLinkPrefixes,
     );
     final editableTextLine = EditableTextLine(
-        node,
-        null,
-        textLine,
-        0,
-        _getVerticalSpacingForLine(node, _styles),
-        _textDirection,
-        controller.selection,
-        widget.selectionColor,
-        widget.enableInteractiveSelection,
-        _hasFocus,
-        MediaQuery.of(context).devicePixelRatio,
-        _cursorCont);
+      node,
+      null,
+      textLine,
+      0,
+      _getVerticalSpacingForLine(node, _styles),
+      _textDirection,
+      controller.selection,
+      widget.selectionColor,
+      widget.enableInteractiveSelection,
+      _hasFocus,
+      MediaQuery.of(context).devicePixelRatio,
+      _cursorCont,
+      virtualCursors: widget.virtualCursors,
+    );
     return editableTextLine;
   }
 
@@ -1730,6 +1734,7 @@ class _Editor extends MultiChildRenderObjectWidget {
     this.padding = EdgeInsets.zero,
     this.maxContentWidth,
     this.offset,
+    this.virtualCursors = const [],
   }) : super(key: key, children: children);
 
   final ViewportOffset? offset;
@@ -1746,6 +1751,7 @@ class _Editor extends MultiChildRenderObjectWidget {
   final EdgeInsetsGeometry padding;
   final double? maxContentWidth;
   final CursorCont cursorController;
+  final List<VirtualCursor> virtualCursors;
   final bool floatingCursorDisabled;
 
   @override

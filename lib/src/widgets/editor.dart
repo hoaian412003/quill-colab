@@ -187,6 +187,7 @@ class QuillEditor extends StatefulWidget {
     this.enableUnfocusOnTapOutside = true,
     this.customLinkPrefixes = const <String>[],
     this.dialogTheme,
+    this.virtualCursors = const [],
     Key? key,
   }) : super(key: key);
 
@@ -264,6 +265,10 @@ class QuillEditor extends StatefulWidget {
   /// When this is set to `true`, the text cannot be modified
   /// by any shortcut or keyboard operation. The text is still selectable.
   ///
+
+  /// Show virtual cursor of another users
+  final List<VirtualCursor> virtualCursors;
+
   /// Defaults to `false`. Must not be `null`.
   final bool readOnly;
   final String? placeholder;
@@ -482,53 +487,53 @@ class QuillEditorState extends State<QuillEditor>
         widget.enableInteractiveSelection && widget.enableSelectionToolbar;
 
     final child = RawEditor(
-      key: _editorKey,
-      controller: widget.controller,
-      focusNode: widget.focusNode,
-      scrollController: widget.scrollController,
-      scrollable: widget.scrollable,
-      scrollBottomInset: widget.scrollBottomInset,
-      padding: widget.padding,
-      readOnly: widget.readOnly,
-      placeholder: widget.placeholder,
-      onLaunchUrl: widget.onLaunchUrl,
-      contextMenuBuilder:
-          showSelectionToolbar ? RawEditor.defaultContextMenuBuilder : null,
-      showSelectionHandles: isMobile(theme.platform),
-      showCursor: widget.showCursor,
-      cursorStyle: CursorStyle(
-        color: cursorColor,
-        backgroundColor: Colors.grey,
-        width: 2,
-        radius: cursorRadius,
-        offset: cursorOffset,
-        paintAboveText: widget.paintCursorAboveText ?? paintCursorAboveText,
-        opacityAnimates: cursorOpacityAnimates,
-      ),
-      textCapitalization: widget.textCapitalization,
-      minHeight: widget.minHeight,
-      maxHeight: widget.maxHeight,
-      maxContentWidth: widget.maxContentWidth,
-      customStyles: widget.customStyles,
-      expands: widget.expands,
-      autoFocus: widget.autoFocus,
-      selectionColor: selectionColor,
-      selectionCtrls: widget.textSelectionControls ?? textSelectionControls,
-      keyboardAppearance: widget.keyboardAppearance,
-      enableInteractiveSelection: widget.enableInteractiveSelection,
-      scrollPhysics: widget.scrollPhysics,
-      embedBuilder: _getEmbedBuilder,
-      linkActionPickerDelegate: widget.linkActionPickerDelegate,
-      customStyleBuilder: widget.customStyleBuilder,
-      customRecognizerBuilder: widget.customRecognizerBuilder,
-      floatingCursorDisabled: widget.floatingCursorDisabled,
-      onImagePaste: widget.onImagePaste,
-      customShortcuts: widget.customShortcuts,
-      customActions: widget.customActions,
-      customLinkPrefixes: widget.customLinkPrefixes,
-      enableUnfocusOnTapOutside: widget.enableUnfocusOnTapOutside,
-      dialogTheme: widget.dialogTheme,
-    );
+        key: _editorKey,
+        controller: widget.controller,
+        focusNode: widget.focusNode,
+        scrollController: widget.scrollController,
+        scrollable: widget.scrollable,
+        scrollBottomInset: widget.scrollBottomInset,
+        padding: widget.padding,
+        readOnly: widget.readOnly,
+        placeholder: widget.placeholder,
+        onLaunchUrl: widget.onLaunchUrl,
+        contextMenuBuilder:
+            showSelectionToolbar ? RawEditor.defaultContextMenuBuilder : null,
+        showSelectionHandles: isMobile(theme.platform),
+        showCursor: widget.showCursor,
+        cursorStyle: CursorStyle(
+          color: cursorColor,
+          backgroundColor: Colors.grey,
+          width: 2,
+          radius: cursorRadius,
+          offset: cursorOffset,
+          paintAboveText: widget.paintCursorAboveText ?? paintCursorAboveText,
+          opacityAnimates: cursorOpacityAnimates,
+        ),
+        textCapitalization: widget.textCapitalization,
+        minHeight: widget.minHeight,
+        maxHeight: widget.maxHeight,
+        maxContentWidth: widget.maxContentWidth,
+        customStyles: widget.customStyles,
+        expands: widget.expands,
+        autoFocus: widget.autoFocus,
+        selectionColor: selectionColor,
+        selectionCtrls: widget.textSelectionControls ?? textSelectionControls,
+        keyboardAppearance: widget.keyboardAppearance,
+        enableInteractiveSelection: widget.enableInteractiveSelection,
+        scrollPhysics: widget.scrollPhysics,
+        embedBuilder: _getEmbedBuilder,
+        linkActionPickerDelegate: widget.linkActionPickerDelegate,
+        customStyleBuilder: widget.customStyleBuilder,
+        customRecognizerBuilder: widget.customRecognizerBuilder,
+        floatingCursorDisabled: widget.floatingCursorDisabled,
+        onImagePaste: widget.onImagePaste,
+        customShortcuts: widget.customShortcuts,
+        customActions: widget.customActions,
+        customLinkPrefixes: widget.customLinkPrefixes,
+        enableUnfocusOnTapOutside: widget.enableUnfocusOnTapOutside,
+        dialogTheme: widget.dialogTheme,
+        virtualCursors: widget.virtualCursors);
 
     final editor = I18n(
       initialLocale: widget.locale,
@@ -840,6 +845,7 @@ class RenderEditor extends RenderEditableContainerBox
     EdgeInsets floatingCursorAddedMargin =
         const EdgeInsets.fromLTRB(4, 4, 4, 5),
     double? maxContentWidth,
+    this.virtualCursors = const [],
   })  : _hasFocus = hasFocus,
         _extendSelectionOrigin = selection,
         _startHandleLayerLink = startHandleLayerLink,
@@ -857,6 +863,7 @@ class RenderEditor extends RenderEditableContainerBox
   final CursorCont _cursorController;
   final bool floatingCursorDisabled;
   final bool scrollable;
+  final List<VirtualCursor> virtualCursors;
 
   Document document;
   TextSelection selection;
@@ -1550,7 +1557,6 @@ class RenderEditor extends RenderEditableContainerBox
 
   void _paintFloatingCursor(PaintingContext context, Offset offset) {
     _floatingCursorPainter.paint(context.canvas);
-    debugPrint('off setis: ${offset}');
   }
 
   // End floating cursor

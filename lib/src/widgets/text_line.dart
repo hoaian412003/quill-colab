@@ -507,19 +507,19 @@ class _TextLineState extends State<TextLine> {
 
 class EditableTextLine extends RenderObjectWidget {
   const EditableTextLine(
-    this.line,
-    this.leading,
-    this.body,
-    this.indentWidth,
-    this.verticalSpacing,
-    this.textDirection,
-    this.textSelection,
-    this.color,
-    this.enableInteractiveSelection,
-    this.hasFocus,
-    this.devicePixelRatio,
-    this.cursorCont,
-  );
+      this.line,
+      this.leading,
+      this.body,
+      this.indentWidth,
+      this.verticalSpacing,
+      this.textDirection,
+      this.textSelection,
+      this.color,
+      this.enableInteractiveSelection,
+      this.hasFocus,
+      this.devicePixelRatio,
+      this.cursorCont,
+      {this.virtualCursors = const []});
 
   final Line line;
   final Widget? leading;
@@ -533,6 +533,7 @@ class EditableTextLine extends RenderObjectWidget {
   final bool hasFocus;
   final double devicePixelRatio;
   final CursorCont cursorCont;
+  final List<VirtualCursor> virtualCursors;
 
   @override
   RenderObjectElement createElement() {
@@ -552,6 +553,7 @@ class EditableTextLine extends RenderObjectWidget {
         _getPadding(),
         color,
         cursorCont,
+        virtualCursors: virtualCursors,
         defaultStyles.inlineCode!);
   }
 
@@ -569,6 +571,7 @@ class EditableTextLine extends RenderObjectWidget {
       ..hasFocus = hasFocus
       ..setDevicePixelRatio(devicePixelRatio)
       ..setCursorCont(cursorCont)
+      ..virtualCursors = virtualCursors
       ..setInlineCodeStyle(defaultStyles.inlineCode!);
   }
 
@@ -594,7 +597,8 @@ class RenderEditableTextLine extends RenderEditableBox {
       this.padding,
       this.color,
       this.cursorCont,
-      this.inlineCodeStyle);
+      this.inlineCodeStyle,
+      {this.virtualCursors = const []});
 
   RenderBox? _leading;
   RenderContentProxyBox? _body;
@@ -613,6 +617,7 @@ class RenderEditableTextLine extends RenderEditableBox {
   late Rect _caretPrototype;
   InlineCodeStyle inlineCodeStyle;
   final Map<TextLineSlot, RenderBox> children = <TextLineSlot, RenderBox>{};
+  List<VirtualCursor> virtualCursors = [];
 
   Iterable<RenderBox> get _children sync* {
     if (_leading != null) {
@@ -1130,6 +1135,7 @@ class RenderEditableTextLine extends RenderEditableBox {
         _paintCursor(context, effectiveOffset, line.hasEmbed);
       }
 
+      _paintVirtualCursor(context, effectiveOffset);
       context.paintChild(_body!, effectiveOffset);
 
       if (hasFocus &&
@@ -1184,6 +1190,21 @@ class RenderEditableTextLine extends RenderEditableBox {
             affinity: textSelection.base.affinity);
     _cursorPainter.paint(
         context.canvas, effectiveOffset, position, lineHasEmbed);
+  }
+
+  void _paintVirtualCursor(PaintingContext context, Offset effectiveOffset) {
+    virtualCursors.forEach((virtualCursor) {
+      debugPrint('${virtualCursor.offset}, ${line.documentOffset}');
+      if (virtualCursor.offset - line.documentOffset >= line.length) {
+        debugPrint('no paint');
+        return;
+      }
+      final position = TextPosition(
+          offset: virtualCursor.offset - line.documentOffset,
+          affinity: TextAffinity.downstream);
+      _cursorPainter.paint(context.canvas, effectiveOffset, position, false,
+          color: virtualCursor.color);
+    });
   }
 
   @override
