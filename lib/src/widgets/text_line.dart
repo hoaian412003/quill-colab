@@ -571,7 +571,7 @@ class EditableTextLine extends RenderObjectWidget {
       ..hasFocus = hasFocus
       ..setDevicePixelRatio(devicePixelRatio)
       ..setCursorCont(cursorCont)
-      ..virtualCursors = virtualCursors
+      ..setVirtualCursors(virtualCursors)
       ..setInlineCodeStyle(defaultStyles.inlineCode!);
   }
 
@@ -641,6 +641,11 @@ class RenderEditableTextLine extends RenderEditableBox {
       return;
     }
     devicePixelRatio = d;
+    markNeedsLayout();
+  }
+
+  void setVirtualCursors(List<VirtualCursor> lv) {
+    virtualCursors = lv;
     markNeedsLayout();
   }
 
@@ -1134,7 +1139,6 @@ class RenderEditableTextLine extends RenderEditableBox {
           !cursorCont.style.paintAboveText) {
         _paintCursor(context, effectiveOffset, line.hasEmbed);
       }
-
       _paintVirtualCursor(context, effectiveOffset);
       context.paintChild(_body!, effectiveOffset);
 
@@ -1194,7 +1198,7 @@ class RenderEditableTextLine extends RenderEditableBox {
 
   void _paintVirtualCursor(PaintingContext context, Offset effectiveOffset) {
     virtualCursors.forEach((virtualCursor) {
-      if (virtualCursor.offset - line.documentOffset > line.length ||
+      if (virtualCursor.offset - line.documentOffset >= line.length ||
           virtualCursor.offset < line.documentOffset) {
         return;
       }
