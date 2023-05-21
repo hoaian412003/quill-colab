@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as _material;
 import 'package:flutter/widgets.dart';
 
 import '../utils/platform.dart';
@@ -350,7 +350,9 @@ class CursorPainter {
 class VirtualCursor {
   factory VirtualCursor.fromJson(Map<String, dynamic> json) {
     return VirtualCursor(
-        color: json['color'] ? Color(int.parse(json['color'])) : Colors.red,
+        color: json['color']
+            ? _material.Color(int.parse(json['color']))
+            : _material.Colors.red,
         offset: json['offset'] ? json['offset'] : 0);
   }
   VirtualCursor({required this.color, required this.offset});
